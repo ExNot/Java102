@@ -1,4 +1,4 @@
-package Generic.ListClassHW;
+package ListClassHW;
 
 import NestedClass.Out;
 

@@ -1,4 +1,4 @@
-package Generic.ListClassHW;
+package ListClassHW;
 
 
 public class GenericMethods<T> {
