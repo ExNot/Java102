@@ -3,11 +3,17 @@ package xCourse.View;
 import xCourse.Helper.Config;
 import xCourse.Helper.Helper;
 import xCourse.Model.Operator;
+import xCourse.Model.Paths;
 import xCourse.Model.User;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 public class OperatorGUI extends JFrame {
@@ -34,8 +40,14 @@ public class OperatorGUI extends JFrame {
     private JPanel fld_paths;
     private JScrollPane scrl_paths_pane;
     private JTable tbl_paths_list;
+    private JPanel pnl_path_add;
+    private JTextField fld_path_add;
+    private JButton btn_path_add;
     private DefaultTableModel mdl_user_list;
     private Object[] row_user_list;
+    private DefaultTableModel mdl_paths_list;
+    private Object[] row_paths_list;
+    private JPopupMenu path_menu;
 
     private final Operator operator;
 
@@ -54,7 +66,7 @@ public class OperatorGUI extends JFrame {
 
         lbl_welcome.setText("Welcome " + operator.getName());
 
-        //MODEL USER LIST//
+        //@@@@@@@@@@@           START OF USER LIST
         mdl_user_list = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -153,6 +165,77 @@ public class OperatorGUI extends JFrame {
         btn_Exit.addActionListener(e -> {
             dispose();
         });
+
+
+            //@@@@@@@@@@@@@@        END OF USER LIST
+
+
+
+            //@@@@@@@@@@@           START OF PATHS LIST
+        path_menu = new JPopupMenu();
+        JMenuItem updateMenu = new JMenuItem("Update");
+        JMenuItem deleteMenu = new JMenuItem("Delete");
+
+        path_menu.add(updateMenu);
+        path_menu.add(deleteMenu);
+
+        mdl_paths_list = new DefaultTableModel();
+        Object[] col_paths_list = {"ID", "Path Name"};
+        mdl_paths_list.setColumnIdentifiers(col_paths_list);
+        row_paths_list = new Object[col_paths_list.length];
+        loadPathModel();
+
+        tbl_paths_list.setModel(mdl_paths_list);
+        tbl_paths_list.setComponentPopupMenu(path_menu);
+
+        tbl_paths_list.getColumnModel().getColumn(0).setResizable(false);
+        tbl_paths_list.getTableHeader().getColumnModel().getColumn(0).setMaxWidth(78);
+
+        tbl_paths_list.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                Point selected_row_point = e.getPoint();
+                int selected_row_int = tbl_paths_list.rowAtPoint(selected_row_point);
+                tbl_paths_list.setRowSelectionInterval(selected_row_int,selected_row_int);
+
+            }
+        });
+
+
+        btn_path_add.addActionListener(e -> {
+
+            if (Helper.isFieldEmpty(fld_path_add)){
+                Helper.showMsg("fill");
+            }
+            else {
+                if (Paths.addPath(fld_path_add.getText())){
+                    Helper.showMsg("done");
+                    loadPathModel();
+                    fld_path_add.setText(null);
+                }
+                else {
+
+                    Helper.showMsg("error");
+
+                }
+            }
+
+        });
+    }
+
+    private void loadPathModel() {
+
+        DefaultTableModel clearModel = (DefaultTableModel) tbl_paths_list.getModel();
+        clearModel.setRowCount(0);
+        int i = 0;
+        for (Paths obj: Paths.getList()){
+            i = 0;
+            row_paths_list[i++] = obj.getId();
+            row_paths_list[i++] = obj.getName();
+            mdl_paths_list.addRow(row_paths_list);
+
+        }
+
     }
 
 
