@@ -1,6 +1,7 @@
 package xCourse.Model;
 
 import xCourse.Helper.DBConnector;
+import xCourse.Helper.Helper;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -63,6 +64,50 @@ public class Paths {
         }
         return true;
 
+    }
+
+    public static boolean update(int id, String name){
+        String query = "UPDATE paths SET pathname =? WHERE id =?";
+        try {
+            PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
+            pst.setInt(2,id);
+            pst.setString(1,name);
+            return pst.executeUpdate() != -1;
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return true;
+    }
+
+    public static Paths getFetch(int id){
+        Paths obj = null;
+        String query = "SELECT * FROM paths WHERE id =?";
+        try {
+            PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
+            pst.setInt(1,id);
+            ResultSet rst = pst.executeQuery();
+            if (rst.next()){
+                obj = new Paths(rst.getInt("id"),rst.getString("pathname"));
+            }
+            else
+                Helper.showMsg("error");
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return obj;
+    }
+
+    public static boolean delete(int id){
+        String query = "DELETE FROM paths WHERE id =?";
+        try {
+            PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
+            pst.setInt(1,id);
+            return pst.executeUpdate() != -1;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 

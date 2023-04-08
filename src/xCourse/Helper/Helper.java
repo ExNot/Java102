@@ -68,6 +68,17 @@ public class Helper {
         JOptionPane.showMessageDialog(null,message,title,JOptionPane.INFORMATION_MESSAGE);
 
     }
+
+    public static boolean confirm(){
+
+        if (JOptionPane.showConfirmDialog(null,"Are You Sure to delete this?","DELETE", JOptionPane.YES_NO_OPTION)== 0)
+            return true;
+        else
+            return false;
+
+    }
+
+
     public static void optionPaneLang(){
 
         UIManager.put("OptionPane.okButtonText", "OKEY!");

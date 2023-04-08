@@ -2,6 +2,8 @@ package xCourse.View;
 
 import xCourse.Helper.Config;
 import xCourse.Helper.Helper;
+import xCourse.Helper.Item;
+import xCourse.Model.Course;
 import xCourse.Model.Operator;
 import xCourse.Model.Paths;
 import xCourse.Model.User;
@@ -10,10 +12,7 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 
 public class OperatorGUI extends JFrame {
@@ -43,11 +42,22 @@ public class OperatorGUI extends JFrame {
     private JPanel pnl_path_add;
     private JTextField fld_path_add;
     private JButton btn_path_add;
+    private JPanel pnl_course_list;
+    private JScrollPane scrl_course_list;
+    private JTable tbl_course_list;
+    private JPanel pnl_course_add;
+    private JTextField fld_course_name;
+    private JTextField fld_course_lang;
+    private JComboBox cmb_course_path;
+    private JComboBox cmb_course_educator;
+    private JButton btn_course_add;
     private DefaultTableModel mdl_user_list;
     private Object[] row_user_list;
     private DefaultTableModel mdl_paths_list;
     private Object[] row_paths_list;
     private JPopupMenu path_menu;
+    private DefaultTableModel mdl_course_list;
+    private Object[] row_course_list;
 
     private final Operator operator;
 
@@ -112,6 +122,7 @@ public class OperatorGUI extends JFrame {
                 if (User.updateById(user_id, name_surname, user_name, password, type)) {
                     Helper.showMsg("done");
                     loadUser();
+                    loadEducatorCombo();
                 }
                 loadUser();
             }
@@ -131,7 +142,7 @@ public class OperatorGUI extends JFrame {
                 if (User.add(name, uname, pass, accountType)) {
                     Helper.showMsg("done");
                     loadUser();
-
+                    loadEducatorCombo();
                     fld_password.setText(null);
                     fld_name.setText(null);
                     fld_user_name.setText(null);
@@ -145,16 +156,23 @@ public class OperatorGUI extends JFrame {
 
                 Helper.showMsg("fill");
             } else {
-                int deleteById = Integer.parseInt(fld_delete_byId.getText());
-                if (User.deleteById(deleteById)) {
+                if (Helper.confirm()) {
+                    int deleteById = Integer.parseInt(fld_delete_byId.getText());
+                    if (User.deleteById(deleteById)) {
 
-                    Helper.showMsg("done");
-                    loadUser();
-                } else {
-                    Helper.showMsg("error");
+                        Helper.showMsg("done");
+                        loadUser();
+                        loadEducatorCombo();
+                        fld_delete_byId.setText(null);
+                    } else {
+                        Helper.showMsg("error");
+                    }
                 }
+
             }
         });
+
+
         btn_user_search.addActionListener(e -> {
             String name = fld_search_name.getText().toString();
             String userName = fld_sch_username.getText().toString();
@@ -167,17 +185,45 @@ public class OperatorGUI extends JFrame {
         });
 
 
-            //@@@@@@@@@@@@@@        END OF USER LIST
+        //@@@@@@@@@@@@@@        END OF USER LIST
 
 
-
-            //@@@@@@@@@@@           START OF PATHS LIST
+        //@@@@@@@@@@@           START OF PATHS LIST
         path_menu = new JPopupMenu();
         JMenuItem updateMenu = new JMenuItem("Update");
         JMenuItem deleteMenu = new JMenuItem("Delete");
 
         path_menu.add(updateMenu);
         path_menu.add(deleteMenu);
+
+        updateMenu.addActionListener(e -> {
+            int selected_id = Integer.parseInt(tbl_paths_list.getValueAt(tbl_paths_list.getSelectedRow(), 0).toString());
+            UpdatePathGUI updatePathGUI = new UpdatePathGUI(Paths.getFetch(selected_id));
+            updatePathGUI.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    loadPathModel();
+                    loadPathCombo();
+                    loadEducatorCombo();
+                }
+            });
+        });
+
+
+        deleteMenu.addActionListener(e -> {
+            if (Helper.confirm()) {
+                int selected_id = Integer.parseInt(tbl_paths_list.getValueAt(tbl_paths_list.getSelectedRow(), 0).toString());
+                if (Paths.delete(selected_id)) {
+                    Paths.delete(selected_id);
+                    loadPathModel();
+                    loadPathCombo();
+                    Helper.showMsg("done");
+                } else {
+                    Helper.showMsg("error");
+                }
+            }
+        });
+
 
         mdl_paths_list = new DefaultTableModel();
         Object[] col_paths_list = {"ID", "Path Name"};
@@ -196,7 +242,7 @@ public class OperatorGUI extends JFrame {
             public void mousePressed(MouseEvent e) {
                 Point selected_row_point = e.getPoint();
                 int selected_row_int = tbl_paths_list.rowAtPoint(selected_row_point);
-                tbl_paths_list.setRowSelectionInterval(selected_row_int,selected_row_int);
+                tbl_paths_list.setRowSelectionInterval(selected_row_int, selected_row_int);
 
             }
         });
@@ -204,16 +250,15 @@ public class OperatorGUI extends JFrame {
 
         btn_path_add.addActionListener(e -> {
 
-            if (Helper.isFieldEmpty(fld_path_add)){
+            if (Helper.isFieldEmpty(fld_path_add)) {
                 Helper.showMsg("fill");
-            }
-            else {
-                if (Paths.addPath(fld_path_add.getText())){
+            } else {
+                if (Paths.addPath(fld_path_add.getText())) {
                     Helper.showMsg("done");
                     loadPathModel();
+                    loadPathCombo();
                     fld_path_add.setText(null);
-                }
-                else {
+                } else {
 
                     Helper.showMsg("error");
 
@@ -221,6 +266,68 @@ public class OperatorGUI extends JFrame {
             }
 
         });
+
+
+        //@@@@@@@@@@@           END OF PATHS LIST
+
+
+        //@@@@@@@@@@@           START OF COURSE LIST
+
+        mdl_course_list = new DefaultTableModel();
+        Object[] col_course_list = {"ID", "Course Name", "Programming Language", "Path", "Educator"};
+        mdl_course_list.setColumnIdentifiers(col_course_list);
+        row_course_list = new Object[col_course_list.length];
+        loadCourseModel();
+
+        tbl_course_list.setModel(mdl_course_list);
+        tbl_course_list.getColumnModel().getColumn(0).setMaxWidth(78);
+        tbl_course_list.getTableHeader().setReorderingAllowed(false);
+
+        loadPathCombo();
+        loadEducatorCombo();
+
+
+        btn_course_add.addActionListener(e -> {
+            Item path = (Item) cmb_course_path.getSelectedItem();
+            Item educator = (Item) cmb_course_educator.getSelectedItem();
+            if (Helper.isFieldEmpty(fld_course_name) || Helper.isFieldEmpty(fld_course_lang) || path == null || educator == null) {
+                Helper.showMsg("fill");
+            } else {
+                if (Course.add(fld_course_name.getText(), fld_course_lang.getText(), path, educator)) {
+                    Helper.showMsg("done");
+                    loadCourseModel();
+                    fld_course_lang.setText(null);
+                    fld_course_name.setText(null);
+
+                } else {
+                    Helper.showMsg("error");
+                }
+
+
+            }
+
+
+        });
+
+        //@@@@@@@@@@@           END OF COURSE LIST
+
+    }
+
+    private void loadCourseModel() {
+
+        DefaultTableModel clearModel = (DefaultTableModel) tbl_course_list.getModel();
+        clearModel.setRowCount(0);
+        int i;
+        for (Course obj : Course.getList()) {
+            i = 0;
+            row_course_list[i++] = obj.getId();
+            row_course_list[i++] = obj.getName();
+            row_course_list[i++] = obj.getLang();
+            row_course_list[i++] = obj.getPaths().getName();
+            row_course_list[i++] = obj.getEducator().getName();
+            mdl_course_list.addRow(row_course_list);
+        }
+
     }
 
     private void loadPathModel() {
@@ -228,7 +335,7 @@ public class OperatorGUI extends JFrame {
         DefaultTableModel clearModel = (DefaultTableModel) tbl_paths_list.getModel();
         clearModel.setRowCount(0);
         int i = 0;
-        for (Paths obj: Paths.getList()){
+        for (Paths obj : Paths.getList()) {
             i = 0;
             row_paths_list[i++] = obj.getId();
             row_paths_list[i++] = obj.getName();
@@ -272,6 +379,22 @@ public class OperatorGUI extends JFrame {
             row_user_list[i++] = obj.getType();
             mdl_user_list.addRow(row_user_list);
 
+        }
+    }
+
+    public void loadPathCombo() {
+
+        cmb_course_path.removeAllItems();
+        for (Paths paths : Paths.getList()) {
+            cmb_course_path.addItem(new Item(paths.getId(), paths.getName()));
+        }
+
+    }
+
+    public void loadEducatorCombo() {
+        cmb_course_educator.removeAllItems();
+        for (User user : User.getListByType("educator")) {
+            cmb_course_educator.addItem(new Item(user.getId(), user.getName()));
         }
     }
 

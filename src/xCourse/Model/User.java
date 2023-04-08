@@ -95,6 +95,30 @@ public class User {
 
         return userList;
     }
+
+
+    public static ArrayList<User> getListByType(String type){
+        String query = "SELECT * FROM user WHERE type = ?";
+        ArrayList<User> userListByType = new ArrayList<>();
+        User obj;
+        try {
+            PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
+            pst.setString(1,type);
+            ResultSet rst = pst.executeQuery();
+            while (rst.next()){
+                obj = new User(rst.getInt("id"), rst.getString("name"), rst.getString("username")
+                        ,rst.getString("type"),rst.getString("pass"));
+                userListByType.add(obj);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return userListByType;
+
+    }
+
+
+
     public static boolean add(String name, String userName, String password, String type){
 
         String pstQuery = "INSERT INTO user (name, username, pass, type) VALUES (?,?,?,?)";
@@ -133,6 +157,33 @@ public class User {
         try {
             PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
             pst.setString(1, uname);
+            ResultSet resultSet = pst.executeQuery();
+
+            if (resultSet.next()){
+
+                obj = new User();
+                obj.setId(resultSet.getInt("id"));
+                obj.setName(resultSet.getString("name"));
+                obj.setUserName(resultSet.getString("username"));
+                obj.setType(resultSet.getString("type"));
+                obj.setPassword(resultSet.getString("pass"));
+
+
+            }
+
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return obj;
+    }
+
+    public static User getFetch(int id){
+        User obj = null;
+        String query = "SELECT * FROM user WHERE id LIKE ?";
+        try {
+            PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
+            pst.setInt(1, id);
             ResultSet resultSet = pst.executeQuery();
 
             if (resultSet.next()){
