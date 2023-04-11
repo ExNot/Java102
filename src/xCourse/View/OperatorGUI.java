@@ -14,6 +14,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class OperatorGUI extends JFrame {
     private JPanel wraper;
@@ -51,6 +52,13 @@ public class OperatorGUI extends JFrame {
     private JComboBox cmb_course_path;
     private JComboBox cmb_course_educator;
     private JButton btn_course_add;
+    private JPanel pnl_course_update;
+    private JTextField fld_update_coursename;
+    private JTextField fld_update_prog_lang;
+    private JComboBox cmb_path_update;
+    private JComboBox cmb_edu_update;
+    private JButton btn_update_course;
+    private JLabel lbl_id_update;
     private DefaultTableModel mdl_user_list;
     private Object[] row_user_list;
     private DefaultTableModel mdl_paths_list;
@@ -66,7 +74,7 @@ public class OperatorGUI extends JFrame {
 
 
         add(wraper);
-        setSize(1000, 500);
+        setSize(1000, 550);
         int x = Helper.screenCenterLoc("x", getSize());
         int y = Helper.screenCenterLoc("y", getSize());
         setLocation(x, y);
@@ -123,6 +131,7 @@ public class OperatorGUI extends JFrame {
                     Helper.showMsg("done");
                     loadUser();
                     loadEducatorCombo();
+                    loadCourseModel();
                 }
                 loadUser();
             }
@@ -151,25 +160,77 @@ public class OperatorGUI extends JFrame {
 
             }
         });
+
+
         btn_delete_byID.addActionListener(e -> {
+
+
             if (Helper.isFieldEmpty(fld_delete_byId)) {
 
                 Helper.showMsg("fill");
             } else {
-                if (Helper.confirm()) {
-                    int deleteById = Integer.parseInt(fld_delete_byId.getText());
-                    if (User.deleteById(deleteById)) {
 
-                        Helper.showMsg("done");
-                        loadUser();
-                        loadEducatorCombo();
-                        fld_delete_byId.setText(null);
-                    } else {
-                        Helper.showMsg("error");
+                int deleteId = Integer.parseInt(fld_delete_byId.getText());
+                List<Course> courseList = Course.getList(deleteId);
+                String user_name = User.getFetch(deleteId).getName();
+
+                if (courseList.size() != 0) {
+
+                    StringBuilder stringBuilder = new StringBuilder();
+                    for (Course c : courseList) {
+                        stringBuilder.append(c.getName()).append("\n");
                     }
+
+                    int answer = JOptionPane.showConfirmDialog(this, stringBuilder.toString(), user_name + "'s Course List", JOptionPane.INFORMATION_MESSAGE);
+
+                    if (answer == JOptionPane.YES_OPTION) {
+
+                        if (User.deleteById(deleteId)) {
+                            if (User.deleteCourses(deleteId)) {
+
+                                Helper.showMsg("done");
+                                loadUser();
+                                loadEducatorCombo();
+                                loadPathCombo();
+                                loadCourseModel();
+                                fld_delete_byId.setText(null);
+
+                            } else {
+                                Helper.showMsg("error");
+                            }
+
+                        } else {
+                            Helper.showMsg("error");
+                        }
+
+
+                    }
+
+                } else {
+
+                    if (Helper.confirm()) {
+                        int deleteById = Integer.parseInt(fld_delete_byId.getText());
+                        if (User.deleteById(deleteById)) {
+
+                            Helper.showMsg("done");
+                            loadUser();
+                            loadEducatorCombo();
+
+                            fld_delete_byId.setText(null);
+
+
+                        } else {
+                            Helper.showMsg("error");
+                        }
+                    }
+
                 }
 
+                loadPathCombo();
+
             }
+
+
         });
 
 
@@ -179,6 +240,7 @@ public class OperatorGUI extends JFrame {
             String type = cmb_search_accountType.getSelectedItem().toString();
             String query = User.searchQuery(name, userName, type);
             loadUser(User.searchUserList(query));
+
         });
         btn_Exit.addActionListener(e -> {
             dispose();
@@ -273,11 +335,20 @@ public class OperatorGUI extends JFrame {
 
         //@@@@@@@@@@@           START OF COURSE LIST
 
-        mdl_course_list = new DefaultTableModel();
+
+        mdl_course_list = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
         Object[] col_course_list = {"ID", "Course Name", "Programming Language", "Path", "Educator"};
         mdl_course_list.setColumnIdentifiers(col_course_list);
         row_course_list = new Object[col_course_list.length];
         loadCourseModel();
+        tbl_course_list.getTableHeader().setReorderingAllowed(false);
+
 
         tbl_course_list.setModel(mdl_course_list);
         tbl_course_list.getColumnModel().getColumn(0).setMaxWidth(78);
@@ -309,7 +380,67 @@ public class OperatorGUI extends JFrame {
 
         });
 
+        tbl_course_list.getSelectionModel().addListSelectionListener(e -> {
+            String selected_course_id=(tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),0).toString());
+            String course_name =(tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),1).toString());
+            String program_lang =(tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),2).toString());
+            String path = tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),3).toString();
+            String educator = tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),4).toString();
+
+            lbl_id_update.setText(selected_course_id);
+            fld_update_coursename.setText(course_name);
+            fld_update_prog_lang.setText(program_lang);
+
+            load_cmb_path_update();
+            load_cmb_edu_update();
+
+        });
+
+
+
+
+
+        /*tbl_user_list.getModel().addTableModelListener(e -> {
+
+            if (e.getType() == TableModelEvent.UPDATE) {
+
+                int user_id = Integer.parseInt(tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 0).toString());
+                String name_surname = tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 1).toString();
+                String user_name = tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 2).toString();
+                String password = tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 3).toString();
+                String type = tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 4).toString();
+
+
+                if (User.updateById(user_id, name_surname, user_name, password, type)) {
+                    Helper.showMsg("done");
+                    loadUser();
+                    loadEducatorCombo();
+                    loadCourseModel();
+                }
+                loadUser();
+            }
+
+        });*/
+
         //@@@@@@@@@@@           END OF COURSE LIST
+
+    }
+
+    private void load_cmb_path_update() {
+
+        cmb_path_update.removeAllItems();
+        for (Paths paths : Paths.getList()) {
+            cmb_path_update.addItem(new Item(paths.getId(), paths.getName()));
+        }
+
+    }
+
+    private void load_cmb_edu_update() {
+
+        cmb_edu_update.removeAllItems();
+        for (User user : User.getListByType("educator")) {
+            cmb_edu_update.addItem(new Item(user.getId(), user.getName()));
+        }
 
     }
 

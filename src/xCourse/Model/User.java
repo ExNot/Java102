@@ -301,6 +301,23 @@ public class User {
     }
 
 
+    public static boolean deleteCourses(int user_id){
+        String query = "DELETE FROM course WHERE user_id = ?";
+        try {
+
+            PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
+            pst.setInt(1,user_id);
+            return pst.executeUpdate() != -1;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+
+
+
 }
 
 

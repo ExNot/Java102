@@ -33,6 +33,7 @@ public class UpdatePathGUI extends JFrame {
             } else {
                 if (Paths.update(paths.getId(), fld_path_update.getText()))
                     Helper.showMsg("done");
+
                 else
                     Helper.showMsg("error");
                 dispose();

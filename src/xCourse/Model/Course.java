@@ -71,6 +71,27 @@ public class Course {
         return true;
     }
 
+    public static ArrayList<Course> getList(int user_id){
+        ArrayList<Course> courses = new ArrayList<>();
+        Course obj;
+        String query = "SELECT * FROM course WHERE user_id = ?";
+        try {
+
+            PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
+            pst.setInt(1, user_id);
+            ResultSet rst = pst.executeQuery();
+
+            while (rst.next()){
+                obj = new Course(rst.getInt("id"), rst.getInt("user_id"), rst.getInt("path_id"), rst.getString("name"), rst.getString("lang"));
+                courses.add(obj);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+            return courses;
+    }
+
+
 
     public int getId() {
         return id;
