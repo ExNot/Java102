@@ -59,6 +59,8 @@ public class OperatorGUI extends JFrame {
     private JComboBox cmb_edu_update;
     private JButton btn_update_course;
     private JLabel lbl_id_update;
+    private JButton btn_dlt_course;
+    private JButton clear_selection;
     private DefaultTableModel mdl_user_list;
     private Object[] row_user_list;
     private DefaultTableModel mdl_paths_list;
@@ -74,7 +76,7 @@ public class OperatorGUI extends JFrame {
 
 
         add(wraper);
-        setSize(1000, 550);
+        setSize(1000, 600);
         int x = Helper.screenCenterLoc("x", getSize());
         int y = Helper.screenCenterLoc("y", getSize());
         setLocation(x, y);
@@ -243,7 +245,9 @@ public class OperatorGUI extends JFrame {
 
         });
         btn_Exit.addActionListener(e -> {
+
             dispose();
+            LoginGui login = new LoginGui();
         });
 
 
@@ -381,48 +385,128 @@ public class OperatorGUI extends JFrame {
         });
 
         tbl_course_list.getSelectionModel().addListSelectionListener(e -> {
-            String selected_course_id=(tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),0).toString());
-            String course_name =(tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),1).toString());
-            String program_lang =(tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),2).toString());
-            String path = tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),3).toString();
-            String educator = tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),4).toString();
 
-            lbl_id_update.setText(selected_course_id);
-            fld_update_coursename.setText(course_name);
-            fld_update_prog_lang.setText(program_lang);
+            if (tbl_course_list.getSelectedRow() != -1){
+                load_cmb_edu_update();
+                load_cmb_path_update();
 
-            load_cmb_path_update();
-            load_cmb_edu_update();
+                String selected_course_id = tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),0).toString();
+                String course_name = tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),1).toString();
+                String program_lang = tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),2).toString();
+                String path_name = tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),3).toString();
+                String edu_name = tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),4).toString();
+
+
+
+                fld_update_coursename.setText(course_name);
+                fld_update_prog_lang.setText(program_lang);
+                lbl_id_update.setText(selected_course_id);
+
+                int j = -1;
+                for (Paths paths : Paths.getList()) {
+                    j++;
+                    if (paths.getName().equals(path_name)){
+                        cmb_path_update.setSelectedIndex(j);
+                    }
+                }
+
+                User Itemedu = User.getFetchWithName(edu_name);
+
+                Item educator = new Item(Itemedu.getId(), Itemedu.getName());
+
+                int i = -1;
+                for (User user : User.getListByType("educator")) {
+                    i++;
+                    if (user.getName().equals(Itemedu.getName())){
+                        cmb_edu_update.setSelectedIndex(i);
+                    }
+                }
+            }
+            else {
+                fld_update_coursename.setText(null);
+                fld_update_prog_lang.setText(null);
+                lbl_id_update.setText(null);
+                cmb_path_update.setSelectedItem(null);
+                cmb_edu_update.setSelectedItem(null);
+            }
+
+
+
 
         });
 
 
 
+        btn_update_course.addActionListener(e -> {
 
 
-        /*tbl_user_list.getModel().addTableModelListener(e -> {
+            String selected_course_id = tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),0).toString();
+            String course_name = fld_update_coursename.getText().toString();
+            String program_lang = fld_update_prog_lang.getText().toString();
+            String path_name = cmb_path_update.getSelectedItem().toString();
+            String edu_name = cmb_edu_update.getSelectedItem().toString();
 
-            if (e.getType() == TableModelEvent.UPDATE) {
-
-                int user_id = Integer.parseInt(tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 0).toString());
-                String name_surname = tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 1).toString();
-                String user_name = tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 2).toString();
-                String password = tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 3).toString();
-                String type = tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 4).toString();
+            int path_id = Paths.getFetch(path_name).getId();
+            int user_id = User.getFetchWithName(edu_name).getId();
 
 
-                if (User.updateById(user_id, name_surname, user_name, password, type)) {
+
+            if (Helper.isFieldEmpty(fld_update_coursename) || Helper.isFieldEmpty(fld_update_prog_lang)) {
+                Helper.showMsg("fill");
+            } else {
+
+
+                if (Course.updateById(Integer.parseInt(selected_course_id),user_id,path_id,course_name,program_lang)) {
                     Helper.showMsg("done");
-                    loadUser();
-                    loadEducatorCombo();
-                    loadCourseModel();
+
+
+                     loadCourseModel();
+
+
+                    /*loadPathModel();
+                    loadPathCombo();*/
+                    //fld_path_add.setText(null);
+                } else {
+
+                    Helper.showMsg("error");
+
                 }
-                loadUser();
             }
 
-        });*/
+
+        });
+
+        btn_dlt_course.addActionListener(e -> {
+
+            if (tbl_course_list.getSelectionModel().getSelectedItemsCount() != 0){
+                int selected_course_id =Integer.parseInt(tbl_course_list.getValueAt(tbl_course_list.getSelectedRow(),0).toString());
+                Course.delete(selected_course_id);
+                loadCourseModel();
+                Helper.showMsg("done");
+            }
+
+            else {
+                Helper.showMsg("choose");
+            }
+
+        });
+
+    }
+
+
+
 
         //@@@@@@@@@@@           END OF COURSE LIST
+
+
+
+
+    private void load_cmb_edu_update() {
+
+        cmb_edu_update.removeAllItems();
+        for (User user : User.getListByType("educator")) {
+            cmb_edu_update.addItem(new Item(user.getId(), user.getName()));
+        }
 
     }
 
@@ -435,27 +519,31 @@ public class OperatorGUI extends JFrame {
 
     }
 
-    private void load_cmb_edu_update() {
 
-        cmb_edu_update.removeAllItems();
-        for (User user : User.getListByType("educator")) {
-            cmb_edu_update.addItem(new Item(user.getId(), user.getName()));
-        }
-
-    }
 
     private void loadCourseModel() {
 
-        DefaultTableModel clearModel = (DefaultTableModel) tbl_course_list.getModel();
-        clearModel.setRowCount(0);
+        int rowCount = tbl_course_list.getRowCount();
+        for (int i = rowCount-1; i>=0;i--){
+
+            tbl_course_list.removeRowSelectionInterval(i,i);
+
+        }
         int i;
+
+        DefaultTableModel clearModel = (DefaultTableModel) tbl_course_list.getModel();
+
+        clearModel.getDataVector().removeAllElements();
+
+        clearModel.setRowCount(0);
         for (Course obj : Course.getList()) {
-            i = 0;
+            i =0;
+
             row_course_list[i++] = obj.getId();
             row_course_list[i++] = obj.getName();
             row_course_list[i++] = obj.getLang();
             row_course_list[i++] = obj.getPaths().getName();
-            row_course_list[i++] = obj.getEducator().getName();
+            row_course_list[i] = obj.getEducator().getName();
             mdl_course_list.addRow(row_course_list);
         }
 

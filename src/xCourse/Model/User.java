@@ -151,9 +151,34 @@ public class User {
 
     }
 
+    public static User getFetchWithName(String name){
+        User obj = null;
+        String query = "SELECT * FROM user WHERE name LIKE ?";
+
+        try {
+            PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
+            pst.setString(1,name);
+            ResultSet resultSet = pst.executeQuery();
+
+            if (resultSet.next()){
+                obj = new User();
+                obj.setId(resultSet.getInt("id"));
+                obj.setName(resultSet.getString("name"));
+                obj.setUserName(resultSet.getString("username"));
+                obj.setType(resultSet.getString("type"));
+                obj.setPassword(resultSet.getString("pass"));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return obj;
+    }
+
+
     public static User getFetch(String uname){
         User obj = null;
-        String query = "SELECT * FROM user WHERE username LIKE ?";
+        String query = "SELECT * FROM user WHERE username = ?";
         try {
             PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
             pst.setString(1, uname);
@@ -162,6 +187,41 @@ public class User {
             if (resultSet.next()){
 
                 obj = new User();
+                obj.setId(resultSet.getInt("id"));
+                obj.setName(resultSet.getString("name"));
+                obj.setUserName(resultSet.getString("username"));
+                obj.setType(resultSet.getString("type"));
+                obj.setPassword(resultSet.getString("pass"));
+
+
+            }
+
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return obj;
+    }
+
+
+    public static User getFetch(String uname, String password){
+        User obj = null;
+        String query = "SELECT * FROM user WHERE username = ? AND pass = ?";
+        try {
+            PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
+            pst.setString(1, uname);
+            pst.setString(2, password);
+            ResultSet resultSet = pst.executeQuery();
+
+            if (resultSet.next()){
+                switch (resultSet.getString("type")){
+                    case "operator":
+                        obj = new Operator();
+                        break;
+                    default:
+                        obj = new User();
+                }
+
                 obj.setId(resultSet.getInt("id"));
                 obj.setName(resultSet.getString("name"));
                 obj.setUserName(resultSet.getString("username"));
@@ -204,6 +264,9 @@ public class User {
         }
         return obj;
     }
+
+
+
 
     public static boolean deleteById(int id){
 

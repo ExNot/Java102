@@ -60,10 +60,15 @@ public class Helper {
                 message = "There is an error!";
                 title = "ERROR";
                 break;
+            case "choose":
+                message = "Please choose one";
+                title = "ERROR";
+                break;
 
                 default:
                  message = msg;
                  title = "Message";
+
         }
         JOptionPane.showMessageDialog(null,message,title,JOptionPane.INFORMATION_MESSAGE);
 
@@ -72,6 +77,15 @@ public class Helper {
     public static boolean confirm(){
 
         if (JOptionPane.showConfirmDialog(null,"Are You Sure to delete this?","DELETE", JOptionPane.YES_NO_OPTION)== 0)
+            return true;
+        else
+            return false;
+
+    }
+
+    public static boolean confirm(String text){
+
+        if (JOptionPane.showConfirmDialog(null,text,"DELETE", JOptionPane.YES_NO_OPTION)== 0)
             return true;
         else
             return false;

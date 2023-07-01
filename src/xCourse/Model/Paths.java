@@ -19,7 +19,7 @@ public class Paths {
     }
 
     public int getId() {
-        return Id;
+        return this.Id;
     }
 
     public void setId(int id) {
@@ -100,6 +100,9 @@ public class Paths {
     }
 
     public static boolean delete(int id){
+
+
+
         String query = "DELETE FROM paths WHERE id =?";
         try {
             PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
@@ -108,6 +111,24 @@ public class Paths {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static Paths getFetch(String pathName){
+        String query = "SELECT * FROM paths WHERE pathname = ?";
+        Paths obj = null;
+        try {
+            PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
+            pst.setString(1, pathName);
+            ResultSet rst = pst.executeQuery();
+            if (rst.next()){
+
+                obj = new Paths(rst.getInt("id"), rst.getString("pathname"));
+
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return obj;
     }
 
 

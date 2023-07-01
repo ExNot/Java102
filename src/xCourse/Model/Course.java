@@ -19,6 +19,9 @@ public class Course {
     private Paths paths;
     private User educator;
 
+    public Course() {
+    }
+
     public Course(int id, int user_id, int path_id, String name, String lang) {
         this.id = id;
         this.user_id = user_id;
@@ -62,6 +65,7 @@ public class Course {
             pst.setString(3,name);
             pst.setString(4,lang);
 
+
             return pst.executeUpdate() != -1;
 
         } catch (SQLException e) {
@@ -70,6 +74,32 @@ public class Course {
 
         return true;
     }
+
+
+    public static boolean updateById(int id, int eduId, int pathId, String courseName, String lang){
+
+        String query = "UPDATE course SET user_id = ?, path_id = ?, name = ?, lang= ? WHERE id = ?";
+
+        try {
+
+
+            PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
+
+            pst.setInt(1,eduId);
+            pst.setInt(2,pathId);
+            pst.setString(3,courseName);
+            pst.setString(4, lang);
+            pst.setInt(5,id);
+
+            return pst.executeUpdate() != -1;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+
 
     public static ArrayList<Course> getList(int user_id){
         ArrayList<Course> courses = new ArrayList<>();
@@ -89,6 +119,73 @@ public class Course {
             throw new RuntimeException(e);
         }
             return courses;
+    }
+
+
+
+    public static boolean delete(int id){
+        String query = "DELETE FROM course WHERE id =?";
+        try {
+            PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
+            pst.setInt(1,id);
+            return pst.executeUpdate() != -1;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Course getFetch(String courseName){
+        Course obj = null;
+        String query = "SELECT * FROM course WHERE name LIKE ?";
+        try {
+            PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
+            pst.setString(1, courseName);
+            ResultSet rst = pst.executeQuery();
+            if (rst.next()){
+                obj = new Course();
+                obj.setId(rst.getInt("id"));
+                obj.setEducator(User.getFetch(rst.getInt("user_id")));
+                obj.setPath_id(rst.getInt("path_id"));
+                obj.setPaths(Paths.getFetch(rst.getInt("path_id")));
+                obj.setUser_id(rst.getInt("user_id"));
+                obj.setName(rst.getString("name"));
+                obj.setLang(rst.getString("lang"));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return obj;
+    }
+
+
+
+    public static Course getFetch(int id){
+        Course obj = null;
+        String query = "SELECT * FROM course WHERE id LIKE ?";
+        try {
+            PreparedStatement pst = DBConnector.getInstance().prepareStatement(query);
+            pst.setInt(1, id);
+            ResultSet resultSet = pst.executeQuery();
+
+            if (resultSet.next()){
+
+                obj = new Course();
+                obj.setId(resultSet.getInt("id"));
+                obj.setEducator(User.getFetch(resultSet.getInt("user_id")));
+                obj.setPath_id(resultSet.getInt("path_id"));
+                obj.setPaths(Paths.getFetch(resultSet.getInt("path_id")));
+                obj.setUser_id(resultSet.getInt("user_id"));
+                obj.setName(resultSet.getString("name"));
+                obj.setLang(resultSet.getString("lang"));
+
+            }
+
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return obj;
     }
 
 
