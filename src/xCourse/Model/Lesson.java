@@ -1,5 +1,6 @@
 package xCourse.Model;
 
+import NestedClass.Out;
 import xCourse.Helper.DBConnector;
 
 import java.sql.PreparedStatement;
@@ -274,9 +275,14 @@ public class Lesson {
 
     }
 
-
-
-
+    public static ArrayList<Integer> lessonIdList(){
+        ArrayList<Lesson> lessons = Lesson.getList();
+        ArrayList<Integer> allId = new ArrayList<>();
+        for (Lesson less : lessons){
+            allId.add(less.getId());
+        }
+        return allId;
+    }
 
 
 
